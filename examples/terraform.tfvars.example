@@ -1,0 +1,3 @@
+# Copy this file to terraform.tfvars and fill in your actual values
+langfuse_secret_key = "sk-lf-your-secret-key-here"
+langfuse_public_key = "pk-lf-your-public-key-here" 
