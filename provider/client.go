@@ -237,7 +237,7 @@ func (c *Client) CreateApiKey(projectID string, req CreateApiKeyRequest) (*ApiKe
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
 	}
 
