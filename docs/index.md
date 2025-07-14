@@ -30,6 +30,11 @@ resource "langfuse_project" "example" {
   
   retention_days = 30
 }
+
+resource "langfuse_project_api_key" "example" {
+  project_id = langfuse_project.example.id
+  note       = "Production API key"
+}
 ```
 
 ## Authentication

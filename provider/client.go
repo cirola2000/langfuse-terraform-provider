@@ -45,6 +45,33 @@ type UpdateProjectRequest struct {
 	Retention *int                   `json:"retention,omitempty"`
 }
 
+// ApiKey represents a Langfuse project API key
+type ApiKey struct {
+	ID               string  `json:"id"`
+	CreatedAt        string  `json:"createdAt"`
+	ExpiresAt        *string `json:"expiresAt"`
+	LastUsedAt       *string `json:"lastUsedAt"`
+	Note             *string `json:"note"`
+	PublicKey        string  `json:"publicKey"`
+	SecretKey        string  `json:"secretKey,omitempty"`        // Only present in create response
+	DisplaySecretKey string  `json:"displaySecretKey,omitempty"` // Present in both list and create
+}
+
+// ApiKeysResponse represents the response from the API keys list endpoint
+type ApiKeysResponse struct {
+	ApiKeys []ApiKey `json:"apiKeys"`
+}
+
+// CreateApiKeyRequest represents the request to create an API key
+type CreateApiKeyRequest struct {
+	Note *string `json:"note,omitempty"`
+}
+
+// DeleteApiKeyResponse represents the response from deleting an API key
+type DeleteApiKeyResponse struct {
+	Success bool `json:"success"`
+}
+
 // NewClient creates a new Langfuse API client
 func NewClient(apiHost, secretKey, publicKey string) *Client {
 	return &Client{
@@ -175,6 +202,89 @@ func (c *Client) DeleteProject(projectID string) error {
 
 	if resp.StatusCode != http.StatusAccepted {
 		return fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// ListApiKeys retrieves all API keys for a project
+func (c *Client) ListApiKeys(projectID string) ([]ApiKey, error) {
+	endpoint := fmt.Sprintf("/api/public/projects/%s/apiKeys", projectID)
+	resp, err := c.makeRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	var apiKeysResp ApiKeysResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiKeysResp); err != nil {
+		return nil, fmt.Errorf("error decoding response: %w", err)
+	}
+
+	return apiKeysResp.ApiKeys, nil
+}
+
+// CreateApiKey creates a new API key for a project
+func (c *Client) CreateApiKey(projectID string, req CreateApiKeyRequest) (*ApiKey, error) {
+	endpoint := fmt.Sprintf("/api/public/projects/%s/apiKeys", projectID)
+	resp, err := c.makeRequest("POST", endpoint, req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	var apiKey ApiKey
+	if err := json.NewDecoder(resp.Body).Decode(&apiKey); err != nil {
+		return nil, fmt.Errorf("error decoding response: %w", err)
+	}
+
+	return &apiKey, nil
+}
+
+// GetApiKey retrieves a specific API key by ID (implemented using ListApiKeys)
+func (c *Client) GetApiKey(projectID, apiKeyID string) (*ApiKey, error) {
+	apiKeys, err := c.ListApiKeys(projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, apiKey := range apiKeys {
+		if apiKey.ID == apiKeyID {
+			return &apiKey, nil
+		}
+	}
+
+	return nil, fmt.Errorf("API key with ID %s not found in project %s", apiKeyID, projectID)
+}
+
+// DeleteApiKey deletes an API key by ID
+func (c *Client) DeleteApiKey(projectID, apiKeyID string) error {
+	endpoint := fmt.Sprintf("/api/public/projects/%s/apiKeys/%s", projectID, apiKeyID)
+	resp, err := c.makeRequest("DELETE", endpoint, nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	var deleteResp DeleteApiKeyResponse
+	if err := json.NewDecoder(resp.Body).Decode(&deleteResp); err != nil {
+		return fmt.Errorf("error decoding response: %w", err)
+	}
+
+	if !deleteResp.Success {
+		return fmt.Errorf("API key deletion was not successful")
 	}
 
 	return nil

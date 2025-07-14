@@ -145,6 +145,7 @@ func (p *LangfuseProvider) Configure(ctx context.Context, req provider.Configure
 func (p *LangfuseProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewProjectResource,
+		NewProjectApiKeyResource,
 	}
 }
 
