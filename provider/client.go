@@ -49,8 +49,6 @@ type UpdateProjectRequest struct {
 type ApiKey struct {
 	ID               string  `json:"id"`
 	CreatedAt        string  `json:"createdAt"`
-	ExpiresAt        *string `json:"expiresAt"`
-	LastUsedAt       *string `json:"lastUsedAt"`
 	Note             *string `json:"note"`
 	PublicKey        string  `json:"publicKey"`
 	SecretKey        string  `json:"secretKey,omitempty"`        // Only present in create response

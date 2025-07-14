@@ -96,8 +96,6 @@ output "langfuse_config" {
 - `secret_key` (String, Sensitive) The secret key portion of the API key. This is only available immediately after creation and is used as the password in basic authentication.
 - `display_secret_key` (String) A partial display version of the secret key for identification purposes.
 - `created_at` (String) The timestamp when the API key was created (RFC3339 format).
-- `expires_at` (String) The timestamp when the API key expires (RFC3339 format). May be null if the key doesn't expire.
-- `last_used_at` (String) The timestamp when the API key was last used (RFC3339 format). May be null if the key has never been used.
 
 ## Important Notes
 
@@ -137,4 +135,4 @@ Import is not currently supported for API key resources due to the sensitive nat
 
 4. **Environment Separation**: Use different API keys for different environments (development, staging, production).
 
-5. **Monitoring**: Monitor API key usage through the `last_used_at` attribute and Langfuse's audit logs. 
+5. **Monitoring**: Monitor API key usage through Langfuse's audit logs and access patterns. 

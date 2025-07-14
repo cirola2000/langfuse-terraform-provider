@@ -34,8 +34,6 @@ type ProjectApiKeyResourceModel struct {
 	SecretKey        types.String `tfsdk:"secret_key"`
 	DisplaySecretKey types.String `tfsdk:"display_secret_key"`
 	CreatedAt        types.String `tfsdk:"created_at"`
-	ExpiresAt        types.String `tfsdk:"expires_at"`
-	LastUsedAt       types.String `tfsdk:"last_used_at"`
 }
 
 func (r *ProjectApiKeyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -84,14 +82,6 @@ func (r *ProjectApiKeyResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 			"created_at": schema.StringAttribute{
 				MarkdownDescription: "Timestamp when the API key was created",
-				Computed:            true,
-			},
-			"expires_at": schema.StringAttribute{
-				MarkdownDescription: "Timestamp when the API key expires",
-				Computed:            true,
-			},
-			"last_used_at": schema.StringAttribute{
-				MarkdownDescription: "Timestamp when the API key was last used",
 				Computed:            true,
 			},
 		},
@@ -160,14 +150,6 @@ func (r *ProjectApiKeyResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Handle optional fields
-	if apiKey.ExpiresAt != nil {
-		data.ExpiresAt = types.StringValue(*apiKey.ExpiresAt)
-	}
-
-	if apiKey.LastUsedAt != nil {
-		data.LastUsedAt = types.StringValue(*apiKey.LastUsedAt)
-	}
-
 	if apiKey.Note != nil {
 		data.Note = types.StringValue(*apiKey.Note)
 	}
@@ -207,14 +189,6 @@ func (r *ProjectApiKeyResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	// Handle optional fields
-	if apiKey.ExpiresAt != nil {
-		data.ExpiresAt = types.StringValue(*apiKey.ExpiresAt)
-	}
-
-	if apiKey.LastUsedAt != nil {
-		data.LastUsedAt = types.StringValue(*apiKey.LastUsedAt)
-	}
-
 	if apiKey.Note != nil {
 		data.Note = types.StringValue(*apiKey.Note)
 	}
