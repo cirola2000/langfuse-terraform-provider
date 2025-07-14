@@ -1,136 +1,15 @@
 # Terraform Provider for Langfuse
 
-A Terraform provider for managing [Langfuse](https://langfuse.com/) projects.
-
-## Features
-
-- Create, read, update, and delete Langfuse projects
-- Manage project metadata and retention settings
-- Full Terraform lifecycle support
+Manage [Langfuse](https://langfuse.com/) projects and API keys with Terraform.
 
 ## Quick Start
 
-### 1. Download Pre-built Provider
-
-Download the appropriate binary for your platform from [GitHub Releases](https://github.com/cirola2000/langfuse-terraform-provider/releases):
-
-| Platform | Architecture | Download |
-|----------|-------------|----------|
-| macOS | Intel (x86_64) | `terraform-provider-langfuse_1.0.0_darwin_amd64.zip` |
-| macOS | Apple Silicon (ARM64) | `terraform-provider-langfuse_1.0.0_darwin_arm64.zip` |
-| Linux | x86_64 | `terraform-provider-langfuse_1.0.0_linux_amd64.zip` |
-| Linux | ARM64 | `terraform-provider-langfuse_1.0.0_linux_arm64.zip` |
-| Windows | x86_64 | `terraform-provider-langfuse_1.0.0_windows_amd64.zip` |
-
-### 2. Install the Provider
-
-#### On Linux:
-```bash
-# Download and extract
-wget https://github.com/cirola2000/langfuse-terraform-provider/releases/download/v1.0.0/terraform-provider-langfuse_1.0.0_linux_amd64.zip
-unzip terraform-provider-langfuse_1.0.0_linux_amd64.zip
-
-# Install using the provided script
-./install-linux.sh
-```
-
-#### On macOS:
-```bash
-# Download and extract
-wget https://github.com/cirola2000/langfuse-terraform-provider/releases/download/v1.0.0/terraform-provider-langfuse_1.0.0_darwin_arm64.zip
-unzip terraform-provider-langfuse_1.0.0_darwin_arm64.zip
-
-# Install manually
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/darwin_arm64
-cp terraform-provider-langfuse-darwin-arm64 ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/darwin_arm64/terraform-provider-langfuse
-chmod +x ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/darwin_arm64/terraform-provider-langfuse
-```
-
-### 3. Configure Your Terraform
-
-Create a `main.tf` file:
-
 ```hcl
 terraform {
   required_providers {
     langfuse = {
-      source = "registry.terraform.io/cirola2000/langfuse"
-    }
-  }
-}
-
-# Configure the Langfuse Provider
-provider "langfuse" {
-  api_host   = "https://cloud.langfuse.com" # or use LANGFUSE_API_HOST env var
-  secret_key = var.langfuse_secret_key      # or use LANGFUSE_SECRET_KEY env var
-  public_key = var.langfuse_public_key      # or use LANGFUSE_PUBLIC_KEY env var
-}
-
-# Variables for sensitive data
-variable "langfuse_secret_key" {
-  description = "Langfuse Secret Key"
-  type        = string
-  sensitive   = true
-}
-
-variable "langfuse_public_key" {
-  description = "Langfuse Public Key"
-  type        = string
-}
-
-# Create a Langfuse project
-resource "langfuse_project" "example" {
-  name = "my-terraform-project"
-  
-  metadata = {
-    environment = "production"
-    team        = "data-team"
-    cost_center = "engineering"
-  }
-  
-  retention_days = 30
-}
-
-# Output the project ID
-output "project_id" {
-  value = langfuse_project.example.id
-}
-
-output "project_created_at" {
-  value = langfuse_project.example.created_at
-}
-
-output "project_updated_at" {
-  value = langfuse_project.example.updated_at
-}
-```
-
-### 4. Set Up Variables
-
-Create a `terraform.tfvars` file:
-
-```hcl
-langfuse_secret_key = "sk-lf-your-secret-key-here"
-langfuse_public_key = "pk-lf-your-public-key-here"
-```
-
-### 5. Deploy
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-## Usage
-
-### Provider Configuration
-
-```hcl
-terraform {
-  required_providers {
-    langfuse = {
-      source = "registry.terraform.io/cirola2000/langfuse"
+      source  = "cirola2000/langfuse"
+      version = "~> 1.1"
     }
   }
 }
@@ -140,19 +19,8 @@ provider "langfuse" {
   secret_key = var.langfuse_secret_key
   public_key = var.langfuse_public_key
 }
-```
 
-### Environment Variables
-
-You can also configure the provider using environment variables:
-
-- `LANGFUSE_API_HOST` - Langfuse API host URL
-- `LANGFUSE_SECRET_KEY` - Your Langfuse secret key
-- `LANGFUSE_PUBLIC_KEY` - Your Langfuse public key
-
-### Resource: langfuse_project
-
-```hcl
+# Create a project
 resource "langfuse_project" "example" {
   name = "my-project"
   
@@ -163,160 +31,114 @@ resource "langfuse_project" "example" {
   
   retention_days = 30
 }
+
+# Create API keys for the project
+resource "langfuse_project_api_key" "production" {
+  project_id = langfuse_project.example.id
+  note       = "Production API key"
+}
 ```
 
-#### Arguments
+## Authentication
 
-- `name` (Required) - The name of the project
-- `metadata` (Optional) - A map of metadata key-value pairs
-- `retention_days` (Optional) - Number of days to retain data. Must be 0 or at least 3 days
-
-#### Attributes
-
-- `id` - The project ID
-- `created_at` - Project creation timestamp
-- `updated_at` - Project last update timestamp
-
-## Development
-
-### Installing Locally
-
-#### Automatic Installation (Detects Platform)
+Set your Langfuse credentials as environment variables:
 
 ```bash
-# Build and install for your current platform
-make install
-
-# Or build and install for all platforms
-make install-all
+export LANGFUSE_API_HOST="https://cloud.langfuse.com"
+export LANGFUSE_SECRET_KEY="sk-lf-..."
+export LANGFUSE_PUBLIC_KEY="pk-lf-..."
 ```
 
-#### Manual Installation
+Or use Terraform variables:
 
-```bash
-# Build the provider
-go build -o terraform-provider-langfuse
+```hcl
+variable "langfuse_secret_key" {
+  description = "Langfuse Secret Key"
+  type        = string
+  sensitive   = true
+}
 
-# Create the plugins directory (adjust OS and ARCH for your platform)
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/{OS}_{ARCH}/
-
-# Copy the binary
-cp terraform-provider-langfuse ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/{OS}_{ARCH}/
+variable "langfuse_public_key" {
+  description = "Langfuse Public Key"
+  type        = string
+}
 ```
 
-#### Cross-Platform Installation
+## Features
 
-```bash
-# Build for all platforms
-make build-all
+- **Projects**: Create and manage Langfuse projects with metadata and retention settings
+- **API Keys**: Generate and manage project-specific API keys for authentication
+- **Environment Variables**: Support for configuration via environment variables
+- **State Management**: Secure handling of sensitive API keys
 
-# Create distribution packages
-make dist
+## Resources
 
-# Install specific platform (example for Linux AMD64)
-GOOS=linux GOARCH=amd64 go build -o terraform-provider-langfuse-linux-amd64
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/linux_amd64/
-cp terraform-provider-langfuse-linux-amd64 ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/linux_amd64/terraform-provider-langfuse
+| Resource | Description |
+|----------|-------------|
+| `langfuse_project` | Manage Langfuse projects |
+| `langfuse_project_api_key` | Manage project API keys |
+
+## Examples
+
+### Basic Project
+
+```hcl
+resource "langfuse_project" "basic" {
+  name = "my-langfuse-project"
+}
 ```
 
-### Testing
+### Project with Metadata
 
-```bash
-cd examples/
-terraform init
-terraform plan
-terraform apply
+```hcl
+resource "langfuse_project" "advanced" {
+  name = "production-app"
+  
+  metadata = {
+    environment   = "production"
+    team          = "ml-team"
+    cost_center   = "engineering"
+    application   = "recommendation-engine"
+  }
+  
+  retention_days = 90
+}
 ```
 
-## Linux Deployment
+### Multi-Environment Setup
 
-For Linux users, you have several deployment options:
+```hcl
+resource "langfuse_project" "app" {
+  name = "my-application"
+}
 
-### Option 1: Download Pre-built Binary
+resource "langfuse_project_api_key" "production" {
+  project_id = langfuse_project.app.id
+  note       = "Production environment"
+}
 
-1. Download the appropriate binary for your architecture:
-   - **Linux AMD64**: `terraform-provider-langfuse_1.0.0_linux_amd64.zip`
-   - **Linux ARM64**: `terraform-provider-langfuse_1.0.0_linux_arm64.zip`
+resource "langfuse_project_api_key" "staging" {
+  project_id = langfuse_project.app.id
+  note       = "Staging environment"
+}
 
-2. Extract and install:
-   ```bash
-   # Download and extract (example for AMD64)
-   unzip terraform-provider-langfuse_1.0.0_linux_amd64.zip
-   
-   # Install using the provided script
-   ./install-linux.sh
-   ```
-
-### Option 2: Cross-compile from macOS/Windows
-
-```bash
-# Cross-compile for Linux
-GOOS=linux GOARCH=amd64 go build -o terraform-provider-langfuse-linux-amd64
-
-# Transfer to Linux machine and install
-scp terraform-provider-langfuse-linux-amd64 user@linux-server:/tmp/
-ssh user@linux-server 'mkdir -p ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/linux_amd64 && cp /tmp/terraform-provider-langfuse-linux-amd64 ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/linux_amd64/terraform-provider-langfuse && chmod +x ~/.terraform.d/plugins/registry.terraform.io/cirola2000/langfuse/1.0.0/linux_amd64/terraform-provider-langfuse'
+resource "langfuse_project_api_key" "development" {
+  project_id = langfuse_project.app.id
+  note       = "Development environment"
+}
 ```
 
-### Option 3: Build on Linux
+## Documentation
 
-```bash
-# Clone repository on Linux machine
-git clone https://github.com/cirola2000/langfuse-terraform-provider.git
-cd langfuse-terraform-provider
-
-# Install Go if not available
-# Ubuntu/Debian: sudo apt update && sudo apt install golang-go
-# RHEL/CentOS: sudo yum install golang
-# Arch: sudo pacman -S go
-
-# Build and install
-make install
-```
-
-### Supported Platforms
-
-- **macOS**: darwin_amd64, darwin_arm64
-- **Linux**: linux_amd64, linux_arm64  
-- **Windows**: windows_amd64
+- [Provider Documentation](https://registry.terraform.io/providers/cirola2000/langfuse/latest/docs)
+- [Project Resource](https://registry.terraform.io/providers/cirola2000/langfuse/latest/docs/resources/project)
+- [Project API Key Resource](https://registry.terraform.io/providers/cirola2000/langfuse/latest/docs/resources/project_api_key)
 
 ## Requirements
 
 - Terraform >= 1.0
 - Go >= 1.21 (for development)
-- Langfuse organization-scoped API keys
-
-### Installing Go
-
-If you don't have Go installed, you can install it from [https://golang.org/dl/](https://golang.org/dl/) or using a package manager:
-
-```bash
-# macOS with Homebrew
-brew install go
-
-# Ubuntu/Debian
-sudo apt update && sudo apt install golang-go
-
-# Or download from https://golang.org/dl/
-```
-
-## API Reference
-
-This provider uses the Langfuse public API:
-
-- `GET /api/public/organizations/projects` - List projects
-- `POST /api/public/projects` - Create project
-- `PUT /api/public/projects/{projectId}` - Update project
-- `DELETE /api/public/projects/{projectId}` - Delete project
-
-## Getting Langfuse API Keys
-
-1. Go to [Langfuse Cloud](https://cloud.langfuse.com)
-2. Sign up or log in to your account  
-3. Navigate to Settings → API Keys
-4. Create an organization-scoped API key
-5. Copy the public and secret keys
 
 ## License
 
-This project is licensed under the MIT License. 
+MIT License - see [LICENSE](LICENSE) file for details. 
